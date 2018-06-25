@@ -53,6 +53,7 @@ public class CameraView extends TextureView{
     private CaptureRequest.Builder previweBilder; //Previewビルダー
     private CameraCaptureSession previewSession; //PreviewSession
 
+
     //コンストラクタ
     public CameraView(Context context){
         super(context);
