@@ -3,8 +3,10 @@ package camera.jp.co.abs.camera;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -22,6 +24,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
 import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -37,6 +40,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import camera.jp.co.abs.camera.R;
@@ -50,6 +54,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import static android.content.Context.WINDOW_SERVICE;
+
 /**
  * A simple {@link Fragment} subclass.
  */
@@ -59,8 +65,11 @@ public class FragmentCamera extends Fragment {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Member
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-    private Context mParentActivity;
+     private Context mParentActivity;
      private TextureView mTextureView;
+     private static final int GALLERY = 1001;
+
+
      private CameraDevice mCameraDevice;
      private Size mPreviewSize;
      private Size mPictureSize;
@@ -123,10 +132,33 @@ public class FragmentCamera extends Fragment {
     private View.OnClickListener mButtonOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-             takePicture();
-            }
+            takePicture();
+        }
     };
- 
+
+    /**
+     * galleryへのボタンを押した際の移動
+     */
+
+    //galleryボタン
+    private View.OnClickListener goToGalleryButtonOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            startActivityForResult(intent,GALLERY);
+        }
+    };
+
+    //galleryイメージ
+    private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            intent.setType("image/*");
+            startActivityForResult(intent,GALLERY);
+        }
+    };
          
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
@@ -145,9 +177,18 @@ public class FragmentCamera extends Fragment {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
         mTextureView = (TextureView) view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
-         
+
+        Button goToGalleryButton = view.findViewById(R.id.button);
+        ImageView goToGalleryImage = view.findViewById(R.id.imageView);
         Button button = (Button) view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
+
+        //ボタンの表示非表示
+        goToGalleryImage.setVisibility(View.INVISIBLE);
+        goToGalleryButton.setVisibility(View.VISIBLE);
+
+        goToGalleryButton.setOnClickListener(goToGalleryButtonOnClickListener);
+        goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
          
         return view;
     }
@@ -157,7 +198,7 @@ public class FragmentCamera extends Fragment {
         super.onAttach(context);
         mParentActivity = context;
     }
- 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Private Method
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -178,7 +219,16 @@ public class FragmentCamera extends Fragment {
             //privateサイズと写真サイズ取得
             mPreviewSize = getPreviewSize(cameraInfo);
             mPictureSize = getPictureSize(cameraInfo);
-             
+
+//            WindowManager windowManager = (WindowManager) mParentActivity.getSystemService(WINDOW_SERVICE);
+//            int rotation = windowManager.getDefaultDisplay().getRotation();
+//            int viewWindth = mTextureView.getWidth();
+//            int viewHeight = mTextureView.getHeight();
+//            Matrix matrix = new Matrix();
+//            matrix.postRotate(- rotation, viewWindth * 0.5f, viewHeight * 0.5f);
+//            mTextureView.setTransform(matrix);
+
+
             if (cameraInfo == null) return;
 
             //////////////////////////////////////////////////////////////////////////////////////////
@@ -339,13 +389,13 @@ public class FragmentCamera extends Fragment {
     //写真の向きの計算
     private int getPhotoOrientation(){
 
-//        WindowManager windowManager = (WindowManager) getSystemServce()
-
+        WindowManager windowManager = (WindowManager) mParentActivity.getSystemService(WINDOW_SERVICE);
+        int rotation = windowManager.getDefaultDisplay().getRotation();
         int displayRotation = 0;
-//        if (rotation == Surface.ROTATION_0) displayRotation = 0;
-//        if (rotation == Surface.ROTATION_90) displayRotation = 90;
-//        if (rotation == Surface.ROTATION_180) displayRotation = 180;
-//        if (rotation == Surface.ROTATION_270) displayRotation = 270;
+        if (rotation == Surface.ROTATION_0) displayRotation = 0;
+        if (rotation == Surface.ROTATION_90) displayRotation = 90;
+        if (rotation == Surface.ROTATION_180) displayRotation = 180;
+        if (rotation == Surface.ROTATION_270) displayRotation = 270;
 
         int sensorOrientation = cameraInfo.get(CameraCharacteristics.SENSOR_ORIENTATION);
         return (sensorOrientation - displayRotation + 360) % 360;
@@ -385,8 +435,7 @@ public class FragmentCamera extends Fragment {
             captureBilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
             //画像の調整
-
-            captureBilder.set(CaptureRequest.JPEG_ORIENTATION, null);
+            captureBilder.set(CaptureRequest.JPEG_ORIENTATION, getPhotoOrientation());
             List<Surface> outputSurface = new LinkedList<>();
             outputSurface.add(reader.getSurface());
 
