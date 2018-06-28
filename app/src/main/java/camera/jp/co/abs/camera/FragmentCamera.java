@@ -2,9 +2,11 @@ package camera.jp.co.abs.camera;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -21,6 +23,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,6 +36,8 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -47,7 +52,9 @@ import android.widget.Toast;
 
 import camera.jp.co.abs.camera.R;
 
+import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -80,6 +87,8 @@ public class FragmentCamera extends Fragment {
 
     private CameraCharacteristics cameraInfo;
     private String cameraId;
+    SimpleDateFormat format;
+    String NAME;
 
     private Handler uiHandler;
     private Handler workHandler;
@@ -147,12 +156,15 @@ public class FragmentCamera extends Fragment {
     private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+            String uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + NAME;
+            Intent intent = new Intent(Intent.ACTION_PICK, Uri.parse(uri));
+//            toast(uri);
             intent.setType("image/*");
             startActivityForResult(intent,GALLERY);
         }
     };
-         
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,7 +176,7 @@ public class FragmentCamera extends Fragment {
         thread.start();
         workHandler = new Handler(thread.getLooper());
     }
- 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
@@ -482,10 +494,10 @@ public class FragmentCamera extends Fragment {
     private void savePhoto(byte[] data){
         try {
 
-            String NAME = "SaveToImage_Iwamoto";
+            NAME = "SaveToImage_Iwamoto";
 
             //保存先パス生成
-            SimpleDateFormat format = new SimpleDateFormat(
+            format = new SimpleDateFormat(
                     "'IMG' _yyyyMMdd_HHmmss'.jpg'", Locale.getDefault()
             );
 

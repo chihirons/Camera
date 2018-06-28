@@ -11,12 +11,11 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import camera.jp.co.abs.camera.FragmentCamera;
-import camera.jp.co.abs.camera.FragmentImageGet;
-import camera.jp.co.abs.camera.ItemFragment;
 import camera.jp.co.abs.camera.dummy.DummyContent;
 
-public class CameraActivity extends AppCompatActivity implements ItemFragment.OnListFragmentInteractionListener {
+public class CameraActivity extends AppCompatActivity {
+
+    private static final int GALLERY = 1001;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,25 +34,20 @@ public class CameraActivity extends AppCompatActivity implements ItemFragment.On
         transaction.commit();
     }
 
-    @Override
-    public void onListFragmentInteraction(DummyContent.DummyItem item) {
-
-    }
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     private void showCameraFragment() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.CAMERA},1001);
+            requestPermissions(new String[]{Manifest.permission.CAMERA},GALLERY);
             return;
             }
 
-            FragmentCamera f = new FragmentCamera();
+        FragmentCamera f = new FragmentCamera();
         this.setFragment(f);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode != 1001) {
+        if (requestCode != GALLERY) {
             return;
         }
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
