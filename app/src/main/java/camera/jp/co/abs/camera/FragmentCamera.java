@@ -5,6 +5,8 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
@@ -65,22 +67,22 @@ public class FragmentCamera extends Fragment {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Member
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-     private Context mParentActivity;
-     private TextureView mTextureView;
-     private static final int GALLERY = 1001;
+    private Context mParentActivity;
+    private TextureView mTextureView;
+    private static final int GALLERY = 1001;
+    ImageView goToGalleryImage;
 
+    private CameraDevice mCameraDevice;
+    private Size mPreviewSize;
+    private Size mPictureSize;
+    private CaptureRequest.Builder mCaptureRequestBuilder;
+    private CameraCaptureSession mCaptureSession;
 
-     private CameraDevice mCameraDevice;
-     private Size mPreviewSize;
-     private Size mPictureSize;
-     private CaptureRequest.Builder mCaptureRequestBuilder;
-     private CameraCaptureSession mCaptureSession;
+    private CameraCharacteristics cameraInfo;
+    private String cameraId;
 
-     private CameraCharacteristics cameraInfo;
-     private String cameraId;
-
-     private Handler uiHandler;
-     private Handler workHandler;
+    private Handler uiHandler;
+    private Handler workHandler;
  
      ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Listener
@@ -132,6 +134,7 @@ public class FragmentCamera extends Fragment {
     private View.OnClickListener mButtonOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+            goToGalleryImage.setVisibility(View.VISIBLE);
             takePicture();
         }
     };
@@ -139,16 +142,6 @@ public class FragmentCamera extends Fragment {
     /**
      * galleryへのボタンを押した際の移動
      */
-
-    //galleryボタン
-    private View.OnClickListener goToGalleryButtonOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            intent.setType("image/*");
-            startActivityForResult(intent,GALLERY);
-        }
-    };
 
     //galleryイメージ
     private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
@@ -178,16 +171,11 @@ public class FragmentCamera extends Fragment {
         mTextureView = (TextureView) view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        Button goToGalleryButton = view.findViewById(R.id.button);
-        ImageView goToGalleryImage = view.findViewById(R.id.imageView);
+        goToGalleryImage = view.findViewById(R.id.imageView);
         Button button = (Button) view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
 
-        //ボタンの表示非表示
         goToGalleryImage.setVisibility(View.INVISIBLE);
-        goToGalleryButton.setVisibility(View.VISIBLE);
-
-        goToGalleryButton.setOnClickListener(goToGalleryButtonOnClickListener);
         goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
          
         return view;
@@ -219,15 +207,6 @@ public class FragmentCamera extends Fragment {
             //privateサイズと写真サイズ取得
             mPreviewSize = getPreviewSize(cameraInfo);
             mPictureSize = getPictureSize(cameraInfo);
-
-//            WindowManager windowManager = (WindowManager) mParentActivity.getSystemService(WINDOW_SERVICE);
-//            int rotation = windowManager.getDefaultDisplay().getRotation();
-//            int viewWindth = mTextureView.getWidth();
-//            int viewHeight = mTextureView.getHeight();
-//            Matrix matrix = new Matrix();
-//            matrix.postRotate(- rotation, viewWindth * 0.5f, viewHeight * 0.5f);
-//            mTextureView.setTransform(matrix);
-
 
             if (cameraInfo == null) return;
 
@@ -422,6 +401,9 @@ public class FragmentCamera extends Fragment {
                         image = reader.acquireLatestImage();
                         byte[] data = image2data(image);
                         savePhoto(data);
+
+                        goToGalleryImage.setImageBitmap(getImage(data));
+
                     }catch (Exception e){
                         if (image != null) image.close();
                     }
@@ -429,13 +411,13 @@ public class FragmentCamera extends Fragment {
             }, workHandler);
 
             //CaptureSessionの開始
-            final CaptureRequest.Builder captureBilder =
+            final CaptureRequest.Builder captureBuilder =
                     mCameraDevice.createCaptureRequest(mCameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBilder.addTarget(reader.getSurface());
-            captureBilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+            captureBuilder.addTarget(reader.getSurface());
+            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
             //画像の調整
-            captureBilder.set(CaptureRequest.JPEG_ORIENTATION, getPhotoOrientation());
+            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, getPhotoOrientation());
             List<Surface> outputSurface = new LinkedList<>();
             outputSurface.add(reader.getSurface());
 
@@ -445,7 +427,7 @@ public class FragmentCamera extends Fragment {
                 @Override
                 public void onConfigured(@NonNull CameraCaptureSession session) {
                     try {
-                        session.capture(captureBilder.build(), new CameraCaptureSession.CaptureCallback() {
+                        session.capture(captureBuilder.build(), new CameraCaptureSession.CaptureCallback() {
 
                             //完了時に呼ばれる
                             @Override
@@ -486,6 +468,16 @@ public class FragmentCamera extends Fragment {
         return data;
     }
 
+    //撮った画像を配置
+    private Bitmap getImage(byte[] bytes){
+        Bitmap bpm = null;
+        if (bytes != null){
+            bpm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        }
+        return bpm;
+    }
+
+
     //写真の保存
     private void savePhoto(byte[] data){
         try {
@@ -497,9 +489,7 @@ public class FragmentCamera extends Fragment {
                     "'IMG' _yyyyMMdd_HHmmss'.jpg'", Locale.getDefault()
             );
 
-            String fileName = format.format(
-                    new Date(System.currentTimeMillis())
-            );
+            String fileName = format.format(new Date(System.currentTimeMillis()));
 
             String path = Environment.getExternalStorageDirectory() + "/" + NAME + "/" + fileName;
 
