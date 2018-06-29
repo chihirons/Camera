@@ -92,6 +92,13 @@ public class FragmentCamera extends Fragment {
 
     private Handler uiHandler;
     private Handler workHandler;
+
+    //ギャラリー
+    private static final int REQUEST_CHOOSER = 1000;
+    private String filePath;
+    private Uri cameraUri;
+    private File  cameraFile;
+    private Intent intentCamera;
  
      ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Listener
@@ -152,16 +159,62 @@ public class FragmentCamera extends Fragment {
      * galleryへのボタンを押した際の移動
      */
 
+    private void _showGallery(){
+        //カメラの起動Intentの用意
+        if (Build.VERSION.SDK_INT >= 23) {
+
+        }
+        else {
+            intentCamera = cameraIntent(); //cameraIntentというIntentを返す
+        }
+
+        // ギャラリー用のIntent作成
+        Intent intentGallery;
+        if (Build.VERSION.SDK_INT < 19) {
+            intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
+            intentGallery.setType("image/*");
+        } else {
+            intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
+            intentGallery.setType("image/jpeg");
+        }
+
+        //ChooserにGallaryのIntentとCameraのIntentを登録
+        Intent intent = Intent.createChooser(intentGallery, "Select Image");
+        if(intentCamera!=null){
+            intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
+        }
+        startActivityForResult(intent, REQUEST_CHOOSER);
+    }
+
+    private Intent cameraIntent(){
+        // 保存先のフォルダーを作成
+        File cameraFolder = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "IMG"
+        );
+        cameraFolder.mkdirs();
+
+        // 保存ファイル名
+        String fileName = new SimpleDateFormat("ddHHmmss").format(new Date());
+        filePath = cameraFolder.getPath() +"/" + fileName + ".jpg";
+        Log.d("debug","filePath:"+filePath);
+
+        // capture画像のファイルパス
+        cameraFile = new File(filePath);
+        cameraUri = Uri.fromFile(cameraFile);
+
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+
+        return intent;
+    }
+
+
     //galleryイメージ
     private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-
-            String uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + NAME;
-            Intent intent = new Intent(Intent.ACTION_PICK, Uri.parse(uri));
-//            toast(uri);
-            intent.setType("image/*");
-            startActivityForResult(intent,GALLERY);
+            _showGallery();
         }
     };
 
