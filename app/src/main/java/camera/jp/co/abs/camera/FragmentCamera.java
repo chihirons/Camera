@@ -3,6 +3,7 @@ package camera.jp.co.abs.camera;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -54,6 +55,7 @@ import camera.jp.co.abs.camera.R;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -89,16 +91,11 @@ public class FragmentCamera extends Fragment {
     private String cameraId;
     SimpleDateFormat format;
     String NAME;
+    String path;
 
     private Handler uiHandler;
     private Handler workHandler;
 
-    //ギャラリー
-    private static final int REQUEST_CHOOSER = 1000;
-    private String filePath;
-    private Uri cameraUri;
-    private File  cameraFile;
-    private Intent intentCamera;
  
      ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Listener
@@ -150,7 +147,6 @@ public class FragmentCamera extends Fragment {
     private View.OnClickListener mButtonOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            goToGalleryImage.setVisibility(View.VISIBLE);
             takePicture();
         }
     };
@@ -159,64 +155,35 @@ public class FragmentCamera extends Fragment {
      * galleryへのボタンを押した際の移動
      */
 
-    private void _showGallery(){
-        //カメラの起動Intentの用意
-        if (Build.VERSION.SDK_INT >= 23) {
-
-        }
-        else {
-            intentCamera = cameraIntent(); //cameraIntentというIntentを返す
-        }
-
-        // ギャラリー用のIntent作成
-        Intent intentGallery;
-        if (Build.VERSION.SDK_INT < 19) {
-            intentGallery = new Intent(Intent.ACTION_GET_CONTENT);
-            intentGallery.setType("image/*");
-        } else {
-            intentGallery = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intentGallery.addCategory(Intent.CATEGORY_OPENABLE);
-            intentGallery.setType("image/jpeg");
-        }
-
-        //ChooserにGallaryのIntentとCameraのIntentを登録
-        Intent intent = Intent.createChooser(intentGallery, "Select Image");
-        if(intentCamera!=null){
-            intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {intentCamera});
-        }
-        startActivityForResult(intent, REQUEST_CHOOSER);
-    }
-
-    private Intent cameraIntent(){
-        // 保存先のフォルダーを作成
-        File cameraFolder = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "IMG"
-        );
-        cameraFolder.mkdirs();
-
-        // 保存ファイル名
-        String fileName = new SimpleDateFormat("ddHHmmss").format(new Date());
-        filePath = cameraFolder.getPath() +"/" + fileName + ".jpg";
-        Log.d("debug","filePath:"+filePath);
-
-        // capture画像のファイルパス
-        cameraFile = new File(filePath);
-        cameraUri = Uri.fromFile(cameraFile);
-
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
-
-        return intent;
-    }
-
-
     //galleryイメージ
     private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            _showGallery();
+
+            ContentResolver contentResolver = mParentActivity.getContentResolver();
+            Cursor cursor = null;
+            StringBuilder sb = null;
+            // true: images, false:audio
+            boolean flg = true;
+
+            // images
+            cursor = contentResolver.query(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    null,null,null,null);
+
+            boolean start = cursor.moveToFirst();
+
+            toast("////" + cursor.getString(cursor.getColumnIndex(
+                    MediaStore.Images.Media._ID)));
+
+            //            Intent intent = new Intent();
+//            intent.setType("image/*");
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
+//            startActivity(intent);
         }
     };
+
+    //場所指定
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
@@ -240,7 +207,7 @@ public class FragmentCamera extends Fragment {
         Button button = (Button) view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
 
-        goToGalleryImage.setVisibility(View.INVISIBLE);
+        goToGalleryImage.setVisibility(View.VISIBLE);
         goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
          
         return view;
@@ -466,9 +433,6 @@ public class FragmentCamera extends Fragment {
                         image = reader.acquireLatestImage();
                         byte[] data = image2data(image);
                         savePhoto(data);
-
-                        goToGalleryImage.setImageBitmap(getImage(data));
-
                     }catch (Exception e){
                         if (image != null) image.close();
                     }
@@ -533,16 +497,6 @@ public class FragmentCamera extends Fragment {
         return data;
     }
 
-    //撮った画像を配置
-    private Bitmap getImage(byte[] bytes){
-        Bitmap bpm = null;
-        if (bytes != null){
-            bpm = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        }
-        return bpm;
-    }
-
-
     //写真の保存
     private void savePhoto(byte[] data){
         try {
@@ -556,7 +510,7 @@ public class FragmentCamera extends Fragment {
 
             String fileName = format.format(new Date(System.currentTimeMillis()));
 
-            String path = Environment.getExternalStorageDirectory() + "/" + NAME + "/" + fileName;
+            path = Environment.getExternalStorageDirectory() + "/" + NAME + "/" + fileName;
 
             //バイト配列の保存
             saveData(data, path);
@@ -567,6 +521,16 @@ public class FragmentCamera extends Fragment {
             toast(e.toString());
         }
     }
+
+//    private void savePath(){
+//        try{
+//            //ContentValueの更新
+//            ContentValues values = new ContentValues();
+//            values.put();
+//        }
+//
+//    }
+
 
     //バイト配列の保存
     private void saveData(byte[] w, String path) throws Exception{
