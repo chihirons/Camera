@@ -2,8 +2,8 @@ package camera.jp.co.abs.camera;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,7 +11,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -31,14 +30,10 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
-import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -51,12 +46,12 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import camera.jp.co.abs.camera.R;
-
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -92,6 +87,7 @@ public class FragmentCamera extends Fragment {
     SimpleDateFormat format;
     String NAME;
     String path;
+    String savePath;
 
     private Handler uiHandler;
     private Handler workHandler;
@@ -151,6 +147,29 @@ public class FragmentCamera extends Fragment {
         }
     };
 
+
+    public void Provuder(){
+        String[] projection = {MediaStore.MediaColumns.DATA};
+        Cursor cursor = null;
+        File documentDir = new File(mParentActivity.getFilesDir() + "/document");
+        File shareFile = new File(documentDir + "share_file");
+        Uri uri = FileProvider.getUriForFile(mParentActivity, BuildConfig.APPLICATION_ID + ".fileprovider", shareFile);
+
+        toast(String.valueOf(uri));
+
+        cursor = mParentActivity.getContentResolver().query(uri, projection, null, null, null);
+        if (cursor != null){
+            String testpath = null;
+            if (cursor.moveToFirst()){
+                testpath = cursor.getString(0);
+            }
+            cursor.close();
+            if (testpath != null){
+                File file = new File(testpath);
+            }
+        }
+    }
+
     /**
      * galleryへのボタンを押した際の移動
      */
@@ -160,30 +179,45 @@ public class FragmentCamera extends Fragment {
         @Override
         public void onClick(View view) {
 
-            ContentResolver contentResolver = mParentActivity.getContentResolver();
-            Cursor cursor = null;
-            StringBuilder sb = null;
-            // true: images, false:audio
-            boolean flg = true;
+//            // ギャラリー表示
+//            Intent intent = null;
+//            try
+//            {
+//                // for Hanycomb
+//                intent = new Intent();
+//                intent.setClassName("com.android.gallery3d", "com.android.gallery3d.app.Gallery");
+//                startActivity(intent);
+//                return;
+//            }
+//            catch(Exception e) {
+//                try {
+//                    // for Recent device
+//                    intent = new Intent();
+//                    intent.setClassName("com.cooliris.media", "com.cooliris.media.Gallery");
+//                    startActivity(intent);
+//                } catch (ActivityNotFoundException e1) {
+//                    try {
+//                        // for Other device except HTC
+//                        intent = new Intent(Intent.ACTION_VIEW);
+//                        intent.setData(Uri.parse("content://media/external/images/media"));
+//                        startActivity(intent);
+//                    } catch (ActivityNotFoundException e2) {
+//                        // for HTC
+//                        intent = new Intent();
+//                        intent.setClassName("com.htc.album", "com.htc.album.AlbumTabSwitchActivity");
+//                        startActivity(intent);
+//                    }
+//                }
+//            }
 
-            // images
-            cursor = contentResolver.query(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    null,null,null,null);
+            //toast(String.valueOf(MediaStore.Images.Media.EXTERNAL_CONTENT_URI)); //content://media/external/images/media
 
-            boolean start = cursor.moveToFirst();
-
-            toast("////" + cursor.getString(cursor.getColumnIndex(
-                    MediaStore.Images.Media._ID)));
-
-            //            Intent intent = new Intent();
-//            intent.setType("image/*");
-//            intent.setAction(Intent.ACTION_GET_CONTENT);
-//            startActivity(intent);
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_VIEW);
+            startActivity(intent);
         }
     };
-
-    //場所指定
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
@@ -209,7 +243,7 @@ public class FragmentCamera extends Fragment {
 
         goToGalleryImage.setVisibility(View.VISIBLE);
         goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
-         
+
         return view;
     }
  
@@ -500,8 +534,10 @@ public class FragmentCamera extends Fragment {
     //写真の保存
     private void savePhoto(byte[] data){
         try {
-
             NAME = "SaveToImage_Iwamoto";
+
+            savePath = Environment.getExternalStorageDirectory().getPath() + "/" + NAME;  //親と子のファイルパスを指定してあげる
+            File file = new File(savePath);
 
             //保存先パス生成
             format = new SimpleDateFormat(
@@ -510,7 +546,12 @@ public class FragmentCamera extends Fragment {
 
             String fileName = format.format(new Date(System.currentTimeMillis()));
 
-            path = Environment.getExternalStorageDirectory() + "/" + NAME + "/" + fileName;
+            //ディレクトリがあるかどうかの検索
+            if (!file.exists()){
+                directory(file);
+            }
+
+            path = savePath + "/" + fileName;
 
             //バイト配列の保存
             saveData(data, path);
@@ -522,21 +563,14 @@ public class FragmentCamera extends Fragment {
         }
     }
 
-//    private void savePath(){
-//        try{
-//            //ContentValueの更新
-//            ContentValues values = new ContentValues();
-//            values.put();
-//        }
-//
-//    }
-
+    //ディレクトリ作成
+    private void directory(File file){
+        file.mkdirs();
+    }
 
     //バイト配列の保存
     private void saveData(byte[] w, String path) throws Exception{
-
         FileOutputStream out = null;
-
         try {
             out = new FileOutputStream(path);
             out.write(w);
@@ -556,5 +590,4 @@ public class FragmentCamera extends Fragment {
             }
         });
     }
-
- }
+}
