@@ -48,6 +48,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -160,21 +161,25 @@ public class FragmentCamera extends Fragment {
         @Override
         public void onClick(View view) {
 
-            ContentResolver contentResolver = mParentActivity.getContentResolver();
-            Cursor cursor = null;
-            StringBuilder sb = null;
-            // true: images, false:audio
-            boolean flg = true;
+//            File file = new File("/storage/emulated/0/SaveToImage_Iwamoto/IMG _20180705_152120.jpg");
+//            Bitmap bm = BitmapFactory.decodeFile(file.getPath());
+//            goToGalleryImage.setImageBitmap(bm);
 
-            // images
-            cursor = contentResolver.query(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    null,null,null,null);
-
-            boolean start = cursor.moveToFirst();
-
-            toast("////" + cursor.getString(cursor.getColumnIndex(
-                    MediaStore.Images.Media._ID)));
+//            ContentResolver contentResolver = mParentActivity.getContentResolver();
+//            Cursor cursor = null;
+//            StringBuilder sb = null;
+//            // true: images, false:audio
+//            boolean flg = true;
+//
+//            // images
+//            cursor = contentResolver.query(
+//                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+//                    null,null,null,null);
+//
+//            boolean start = cursor.moveToFirst();
+//
+//            toast("////" + cursor.getString(cursor.getColumnIndex(
+//                    MediaStore.Images.Media._ID)));
 
             //            Intent intent = new Intent();
 //            intent.setType("image/*");
@@ -188,7 +193,7 @@ public class FragmentCamera extends Fragment {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-         
+
     public FragmentCamera() {
         //handlerの生成
         uiHandler = new Handler();
@@ -209,10 +214,20 @@ public class FragmentCamera extends Fragment {
 
         goToGalleryImage.setVisibility(View.VISIBLE);
         goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
-         
+
         return view;
     }
- 
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        IntentBerFragment intentBerFragment = new IntentBerFragment();
+        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+        transaction.add(R.id.gallery,intentBerFragment);
+        transaction.commit();
+    }
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
