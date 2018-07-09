@@ -2,10 +2,8 @@ package camera.jp.co.abs.camera;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -24,7 +22,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -39,17 +36,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static android.content.Context.WINDOW_SERVICE;
 
@@ -64,7 +61,6 @@ public class FragmentCamera extends Fragment {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     private Context mParentActivity;
     private TextureView mTextureView;
-    private static final int GALLERY = 1001;
 
     private CameraDevice mCameraDevice;
     private Size mPreviewSize;
@@ -73,7 +69,6 @@ public class FragmentCamera extends Fragment {
     private CameraCaptureSession mCaptureSession;
 
     private CameraCharacteristics cameraInfo;
-    private String cameraId;
     SimpleDateFormat format;
     String NAME;
     String path;
@@ -156,12 +151,12 @@ public class FragmentCamera extends Fragment {
      */
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
-        mTextureView = (TextureView) view.findViewById(R.id.texture_view);
+        mTextureView = view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        Button button = (Button) view.findViewById(R.id.button_take_picture);
+        Button button = view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
 
 
@@ -206,7 +201,9 @@ public class FragmentCamera extends Fragment {
         try {
 
             //内部と外部あともう一個のIDを管理するためのもの
-            cameraId = getCameraId(cameraManager);
+            String cameraId = getCameraId(cameraManager);
+            assert cameraManager != null;
+            assert cameraId != null;
             cameraInfo = cameraManager.getCameraCharacteristics(cameraId);
 
             //privateサイズと写真サイズ取得
@@ -280,7 +277,7 @@ public class FragmentCamera extends Fragment {
 
         try {
             //PreviewSessionのコールバック
-            mCameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
+            mCameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
 
                 //成功時に呼ばれる
                 @Override
@@ -345,13 +342,14 @@ public class FragmentCamera extends Fragment {
 
     //Previewサイズの取得
     private Size getPreviewSize(CameraCharacteristics cc){
-        StreamConfigurationMap map = cc.get(cc.SCALER_STREAM_CONFIGURATION_MAP);
+        StreamConfigurationMap map = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        assert map != null;
         Size[] sizes = map.getOutputSizes(SurfaceTexture.class);
-        for (int i =0; i < sizes.length; i++){
+        for (Size size : sizes) {
 
             //サイズ2000*2000以下
-            if (sizes[i].getWidth() < 2000 && sizes[i].getHeight() < 2000) {
-                return sizes[i];
+            if (size.getWidth() < 2000 && size.getHeight() < 2000) {
+                return size;
             }
         }
         return sizes[0];
@@ -359,12 +357,12 @@ public class FragmentCamera extends Fragment {
 
     //写真サイズの取得
     private Size getPictureSize(CameraCharacteristics cc){
-        Size[] sizes = cc.get(cc.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
-        for (int i = 0; i < sizes.length; i++){
+        Size[] sizes = Objects.requireNonNull(cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)).getOutputSizes(ImageFormat.JPEG);
+        for (Size size : sizes) {
 
             //サイズ2000*2000以下の場合
-            if (sizes[i].getWidth() < 2000 && sizes[i].getHeight() < 2000){
-                return sizes[i];
+            if (size.getWidth() < 2000 && size.getHeight() < 2000) {
+                return size;
             }
         }
         return null;
@@ -374,6 +372,7 @@ public class FragmentCamera extends Fragment {
     private int getPhotoOrientation(){
 
         WindowManager windowManager = (WindowManager) mParentActivity.getSystemService(WINDOW_SERVICE);
+        assert windowManager != null;
         int rotation = windowManager.getDefaultDisplay().getRotation();
         int displayRotation = 0;
         if (rotation == Surface.ROTATION_0) displayRotation = 0;
@@ -414,7 +413,7 @@ public class FragmentCamera extends Fragment {
 
             //CaptureSessionの開始
             final CaptureRequest.Builder captureBuilder =
-                    mCameraDevice.createCaptureRequest(mCameraDevice.TEMPLATE_STILL_CAPTURE);
+                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
             captureBuilder.addTarget(reader.getSurface());
             captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
@@ -494,16 +493,6 @@ public class FragmentCamera extends Fragment {
             toast(e.toString());
         }
     }
-
-//    private void savePath(){
-//        try{
-//            //ContentValueの更新
-//            ContentValues values = new ContentValues();
-//            values.put();
-//        }
-//
-//    }
-
 
     //バイト配列の保存
     private void saveData(byte[] w, String path) throws Exception{

@@ -3,6 +3,7 @@ package camera.jp.co.abs.camera;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -29,12 +30,12 @@ public class IntentBerFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_intent_ber, container, false);
 
         //ボタンの取得
-        ImageView image = (ImageView) view.findViewById(R.id.intent_button);
+        ImageView image = view.findViewById(R.id.intent_button);
 
         image.setOnClickListener(imageGallery);
 
