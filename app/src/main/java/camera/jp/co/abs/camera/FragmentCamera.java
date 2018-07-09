@@ -3,15 +3,10 @@ package camera.jp.co.abs.camera;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -24,20 +19,16 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.MediaScannerConnection;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
-import android.support.annotation.IntDef;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.util.Size;
@@ -48,16 +39,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import camera.jp.co.abs.camera.R;
-
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -73,14 +58,13 @@ import static android.content.Context.WINDOW_SERVICE;
  */
 
 public class FragmentCamera extends Fragment {
- 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Member
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     private Context mParentActivity;
     private TextureView mTextureView;
     private static final int GALLERY = 1001;
-    ImageView goToGalleryImage;
 
     private CameraDevice mCameraDevice;
     private Size mPreviewSize;
@@ -97,11 +81,11 @@ public class FragmentCamera extends Fragment {
     private Handler uiHandler;
     private Handler workHandler;
 
- 
+
      ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Listener
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-         
+
     /**
      * カメラ画面のリスナ
      */
@@ -110,7 +94,7 @@ public class FragmentCamera extends Fragment {
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
             // Textureが有効化されたとき
             Log.d("DEBUG","Textureが有効化されたとき");
-             
+
             prepareCameraView();
             }
 
@@ -141,7 +125,7 @@ public class FragmentCamera extends Fragment {
             mCameraDevice = null;
         }
     }
- 
+
     /**
      * 撮影ボタンタップ
      */
@@ -152,48 +136,13 @@ public class FragmentCamera extends Fragment {
         }
     };
 
-    /**
-     * galleryへのボタンを押した際の移動
-     */
-
-    //galleryイメージ
-    private View.OnClickListener goToGalleryImageOnClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-
-//            File file = new File("/storage/emulated/0/SaveToImage_Iwamoto/IMG _20180705_152120.jpg");
-//            Bitmap bm = BitmapFactory.decodeFile(file.getPath());
-//            goToGalleryImage.setImageBitmap(bm);
-
-//            ContentResolver contentResolver = mParentActivity.getContentResolver();
-//            Cursor cursor = null;
-//            StringBuilder sb = null;
-//            // true: images, false:audio
-//            boolean flg = true;
-//
-//            // images
-//            cursor = contentResolver.query(
-//                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//                    null,null,null,null);
-//
-//            boolean start = cursor.moveToFirst();
-//
-//            toast("////" + cursor.getString(cursor.getColumnIndex(
-//                    MediaStore.Images.Media._ID)));
-
-            //            Intent intent = new Intent();
-//            intent.setType("image/*");
-//            intent.setAction(Intent.ACTION_GET_CONTENT);
-//            startActivity(intent);
-        }
-    };
-
-    //場所指定
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Fragment
     ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * FragmentCameraが呼ばれた際のコンストラクタ
+     */
     public FragmentCamera() {
         //handlerの生成
         uiHandler = new Handler();
@@ -202,21 +151,27 @@ public class FragmentCamera extends Fragment {
         workHandler = new Handler(thread.getLooper());
     }
 
+    /**
+     * ボタンなどのレイヤー開示時の初期設定
+     */
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
         mTextureView = (TextureView) view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        goToGalleryImage = view.findViewById(R.id.imageView);
         Button button = (Button) view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
 
-        goToGalleryImage.setVisibility(View.VISIBLE);
-        goToGalleryImage.setOnClickListener(goToGalleryImageOnClickListener);
 
         return view;
     }
+
+
+    /**
+     * galleryへのボタンの設定Fragmentのネストで別Activityに飛ぶ
+     */
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
@@ -228,6 +183,9 @@ public class FragmentCamera extends Fragment {
         transaction.commit();
     }
 
+    /**
+     * 画面設定Fragmentの画面を得る
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);

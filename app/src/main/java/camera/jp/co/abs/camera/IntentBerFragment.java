@@ -2,7 +2,6 @@ package camera.jp.co.abs.camera;
 
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -45,7 +44,7 @@ public class IntentBerFragment extends Fragment {
     public View.OnClickListener imageGallery = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-           // Intent galleryActivity = new Intent();
+            // Intent galleryActivity = new Intent();
 
             Intent intent = new Intent();
             intent.setType("image/*");
