@@ -148,8 +148,11 @@ public class FragmentCamera extends Fragment {
 
     /**
      * ボタンなどのレイヤー開示時の初期設定
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
      */
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
@@ -165,9 +168,9 @@ public class FragmentCamera extends Fragment {
 
 
     /**
-     * galleryへのボタンの設定Fragmentのネストで別Activityに飛ぶ
+     *  galleryへのボタンの設定Fragmentのネストで別Activityに飛ぶ
+     * @param savedInstanceState
      */
-
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -180,6 +183,7 @@ public class FragmentCamera extends Fragment {
 
     /**
      * 画面設定Fragmentの画面を得る
+     * @param context
      */
     @Override
     public void onAttach(Context context) {
@@ -190,7 +194,7 @@ public class FragmentCamera extends Fragment {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     /// Private Method
     ////////////////////////////////////////////////////////////////////////////////////////////////////
-         
+
     /**
      * TextureViewが有効化されたらカメラを準備する
      */

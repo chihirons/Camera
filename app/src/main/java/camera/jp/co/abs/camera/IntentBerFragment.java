@@ -18,17 +18,33 @@ public class IntentBerFragment extends Fragment {
 
     Context context;
 
+    /**
+     * 画面作成の設定
+     * @param context
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         this.context = context;
     }
 
+    /**
+     * 画面が破棄された場合の画面保存
+     * @param savedInstanceState
+     */
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
+
+    /**
+     * 画面開始時に呼び出される
+     * @param inflater
+     * @param container
+     * @param savedInstanceState
+     * @return
+     */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -42,15 +58,15 @@ public class IntentBerFragment extends Fragment {
         return view;
     }
 
+
+    /**
+     * 画像タップ時の処理(Fragmentのボタンをタップした場合にIntentするようにするボタン)
+     */
     public View.OnClickListener imageGallery = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            // Intent galleryActivity = new Intent();
-
-            Intent intent = new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivity(intent);
+            Intent galleryIntent = new Intent(getActivity(), galleryPopupActivity.class);
+            startActivity(galleryIntent);
         }
     };
 }
