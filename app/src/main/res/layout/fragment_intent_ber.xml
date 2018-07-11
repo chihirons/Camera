@@ -9,5 +9,6 @@
     <ImageView
         android:id="@+id/intent_button"
         android:layout_width="89dp"
-        android:layout_height="87dp" />
+        android:layout_height="87dp"
+        tools:ignore="ContentDescription" />
 </LinearLayout>

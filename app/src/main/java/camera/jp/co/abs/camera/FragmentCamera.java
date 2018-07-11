@@ -26,7 +26,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.util.Size;
@@ -36,7 +35,7 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.FileOutputStream;
@@ -77,7 +76,7 @@ public class FragmentCamera extends Fragment {
     private Handler uiHandler;
     private Handler workHandler;
 
-    private Button button;
+    private ImageView button;
 
 
      ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,7 +166,6 @@ public class FragmentCamera extends Fragment {
      * @param savedInstanceState
      * @return
      */
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
@@ -192,7 +190,7 @@ public class FragmentCamera extends Fragment {
 
         IntentBerFragment intentBerFragment = new IntentBerFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.replace(R.id.gallery,intentBerFragment);
+        transaction.replace(R.id.gallery_info,intentBerFragment);
         transaction.commit();
     }
 
@@ -347,8 +345,7 @@ public class FragmentCamera extends Fragment {
                 CameraCharacteristics cameraInfo = mManager.getCameraCharacteristics(cameraId);
 
                 //背面カメラ
-                if (cameraInfo.get(CameraCharacteristics.LENS_FACING) ==
-                        CameraCharacteristics.LENS_FACING_BACK){
+                if (cameraInfo.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK){
 
                     return cameraId;
                 }
@@ -458,7 +455,7 @@ public class FragmentCamera extends Fragment {
 
                                 IntentBerFragment intentBerFragment = new IntentBerFragment();
                                 FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-                                transaction.replace(R.id.gallery,intentBerFragment);
+                                transaction.replace(R.id.gallery_info,intentBerFragment);
                                 transaction.commit();
 
                                 //Preview再開
@@ -514,7 +511,7 @@ public class FragmentCamera extends Fragment {
             //フォトの登録
             MediaScannerConnection.scanFile(getContext(), new String[]{path}, null, null);
         }catch (Exception e){
-            toast(e.toString());
+            Log.e("DEBUG", "savePhoto...error: " + e);
         }
     }
 

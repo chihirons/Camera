@@ -32,10 +32,10 @@ public class PhotoGalleryPagerAdapter extends PagerAdapter{
      * コンストラクタ.
      * @param context
      */
-    public PhotoGalleryPagerAdapter(Context context){
+    PhotoGalleryPagerAdapter(Context context){
         this.mContext = context;
         this.mResolver = mContext.getContentResolver();
-        this.mList = new ArrayList<Long>();
+        this.mList = new ArrayList<>();
     }
 
     /**
@@ -112,9 +112,9 @@ public class PhotoGalleryPagerAdapter extends PagerAdapter{
 
     //Bitmapのサイズ調整
     private Bitmap getBitmap(Uri imageUri) throws IOException{
-        /** 画像出力用の圧縮 */
+        //画像出力用の圧縮
         BitmapFactory.Options mOptions = new BitmapFactory.Options();
-        /** 画像の画素数を操作できる */
+        // 画像の画素数を操作できる
         mOptions.inPreferredConfig = Bitmap.Config.RGB_565;
 
         Bitmap resizeBitmap;

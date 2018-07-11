@@ -10,8 +10,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-
-import camera.jp.co.abs.camera.dummy.DummyContent;
+import android.util.Log;
 
 public class CameraActivity extends AppCompatActivity {
 
@@ -38,6 +37,7 @@ public class CameraActivity extends AppCompatActivity {
     private void showCameraFragment() {
         if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.CAMERA},GALLERY);
+
             return;
             }
 
@@ -54,7 +54,7 @@ public class CameraActivity extends AppCompatActivity {
             FragmentCamera f = new FragmentCamera();
             this.setFragment(f);
         } else {
-
+            Log.d("DEBUG", "onRequestPermissionResult:" + " grantResults[0] == PackageManager.PERMISSION_GRANTED: else");
         }
     }
 }

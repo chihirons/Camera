@@ -63,7 +63,7 @@ public class galleryPopupActivity extends FragmentActivity {
             };
             String selection = SELECT_BY_PATH + " AND " + MediaStore.MediaColumns._ID + " > ?";
             String[] selectionArgs = new String[] { CAMERA_PATH, Long.toString(-1) };
-            /** 降順検索 */
+            // 降順検索
             String sortOrder = MediaStore.Images.Media._ID + " desc";
 
             return new CursorLoader(getApplicationContext(), uri, projection, selection, selectionArgs, sortOrder);

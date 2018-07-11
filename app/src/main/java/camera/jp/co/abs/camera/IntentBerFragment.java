@@ -119,7 +119,7 @@ public class IntentBerFragment extends Fragment {
         };
         String selection = SELECT_BY_PATH + " AND " + MediaStore.MediaColumns._ID + " > ?";
         String[] selectionArgs = new String[] { CAMERA_PATH, Long.toString(-1) };
-        /** 降順検索 */
+        // 降順検索
         String sortOrder = MediaStore.Images.Media._ID + " desc";
 
         try{
@@ -131,6 +131,7 @@ public class IntentBerFragment extends Fragment {
             return null;
         }
 
+        assert cursor != null;
         if (!cursor.moveToFirst()) return null;
 
         //Uriからファイル名を取得
@@ -149,9 +150,9 @@ public class IntentBerFragment extends Fragment {
 
     //Bitmapのサイズ調整
     private Bitmap getBitmap(Uri imageUri) throws IOException{
-        /** 画像出力用の圧縮 */
+        // 画像出力用の圧縮
         BitmapFactory.Options mOptions = new BitmapFactory.Options();
-        /** 画像の画素数を操作できる */
+        // 画像の画素数を操作できる
         mOptions.inPreferredConfig = Bitmap.Config.RGB_565;
 
         Bitmap resizeBitmap;
