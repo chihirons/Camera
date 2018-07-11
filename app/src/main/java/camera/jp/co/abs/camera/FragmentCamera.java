@@ -26,6 +26,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.util.Size;
@@ -75,6 +76,8 @@ public class FragmentCamera extends Fragment {
 
     private Handler uiHandler;
     private Handler workHandler;
+
+    private Button button;
 
 
      ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +130,18 @@ public class FragmentCamera extends Fragment {
     private View.OnClickListener mButtonOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+
             takePicture();
+
+            //連射防止のため2.5秒間ボタンフリーズ
+            button.setEnabled(false);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    button.setEnabled(true);
+                }
+            }, 2000L);
+
         }
     };
 
@@ -153,13 +167,14 @@ public class FragmentCamera extends Fragment {
      * @param savedInstanceState
      * @return
      */
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_fragment_camera, container, false);
         mTextureView = view.findViewById(R.id.texture_view);
         mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
 
-        Button button = view.findViewById(R.id.button_take_picture);
+        button = view.findViewById(R.id.button_take_picture);
         button.setOnClickListener(mButtonOnClickListener);
 
 
@@ -177,7 +192,7 @@ public class FragmentCamera extends Fragment {
 
         IntentBerFragment intentBerFragment = new IntentBerFragment();
         FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.add(R.id.gallery,intentBerFragment);
+        transaction.replace(R.id.gallery,intentBerFragment);
         transaction.commit();
     }
 
@@ -440,6 +455,11 @@ public class FragmentCamera extends Fragment {
                                 super.onCaptureStarted(session, request, timestamp, frameNumber);
 
                                 toast("撮影成功");
+
+                                IntentBerFragment intentBerFragment = new IntentBerFragment();
+                                FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
+                                transaction.replace(R.id.gallery,intentBerFragment);
+                                transaction.commit();
 
                                 //Preview再開
                                 createCameraCaptureSession();
